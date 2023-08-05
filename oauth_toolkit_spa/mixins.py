@@ -54,13 +54,15 @@ class OAuthToolKitMixin:
 
     def _get_refresh_token_instance(self, request, raise_exception=True):
         client_id = self._get_request_client_id(request)
+        client_secret = self._get_request_client_secret(request)
         token = self._get_token_from_cookie(request, raise_exception)
         if not token:
             return
 
         refresh_token_creation_time = timezone.now() - timedelta(seconds=oauth2_settings.REFRESH_TOKEN_EXPIRE_SECONDS or 36000)
         try:
-            refresh_token = get_refresh_token_model().objects.get(token=token, application__client_id=client_id,
+            refresh_token = get_refresh_token_model().objects.get(token=token, application__client_id=client_id, 
+                                                                  application__client_secret = client_secret, 
                                                                   revoked__isnull=True, created__gt=refresh_token_creation_time)
             return refresh_token
         except:
@@ -73,6 +75,14 @@ class OAuthToolKitMixin:
         serializer.is_valid(raise_exception=raise_exception)
         client_id = serializer.validated_data['client_id']
         return client_id
+    
+    def _get_request_client_secret(self, request, raise_exception=True) -> str:
+        '''Get client_secret from request'''
+        serializer = RefreshSerializer(data=request.data)
+        serializer.is_valid(raise_exception=raise_exception)
+        client_secret = serializer.validated_data['client_secret']
+        print(client_secret)
+        return client_secret
 
     def _get_token_from_cookie(self, request, raise_exception=True) -> Union[str, None]:
         '''Reads refresh token from cookie.'''
@@ -111,7 +121,7 @@ class OAuthToolKitMixin:
 
         login(request, user)
 
-        application = get_application_model().objects.get(client_id=validated_data['client_id'])
+        application = get_application_model().objects.get(client_id=validated_data['client_id'],client_secret=validated_data['client_secret'])
         access_token = get_access_token_model()(user=user, scope='', expires=self._get_access_token_expires_time(),
                                                 token=common.generate_token(), application=application)
         access_token.save()
@@ -131,13 +141,14 @@ class OAuthToolKitMixin:
         serializer.is_valid(raise_exception=True)
         validated_data = serializer.validated_data
         client_id = validated_data['client_id']
+        client_secret = validated_data['client_secret']
         user = authenticate(request, username=validated_data['username'], password=validated_data['password'])
 
         if user is None:
             raise AuthenticationFailed()
 
         refresh_tokens = get_refresh_token_model().objects.filter(
-            user=user, application__client_id=client_id, revoked__isnull=True)
+            user=user, application__client_id=client_id, application__client_secret=client_secret, revoked__isnull=True)
         access_tokens = get_access_token_model().objects.filter(user=user)
 
         return refresh_tokens, access_tokens
