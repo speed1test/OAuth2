@@ -8,8 +8,9 @@ from oauthlib import common
 from django.conf import settings
 from django.utils import timezone
 from django.contrib.auth import authenticate, login
-from .serializers import RefreshSerializer, LogInSerializer
+from .serializers import RefreshSerializer, LogInSerializer, TokenSerializer
 from typing import Union
+#
 
 
 class OAuthToolKitMixin:
@@ -20,6 +21,25 @@ class OAuthToolKitMixin:
         response_body = self._make_response_body(access_token)
         response = Response(response_body, status=status.HTTP_200_OK)
         return self._set_cookie_header_in_response(response, refresh_token.token)
+    
+    def get_hello(self, request, raise_exception=True):
+        try:
+            validation = get_access_token_model().objects.get(token=self._get_request_token(request), expires__gt=timezone.now())
+            return Response({'message': 'Access granted!'}, status=status.HTTP_200_OK)
+        except:
+            if raise_exception is True:
+                return Response({'error': 'Access Invalid'}, status=status.HTTP_401_UNAUTHORIZED)
+        # try:
+        #     print(self._get_request_token(request))
+        #     validation = get_access_token_model().objects.get(token=self._get_request_token(request))
+        #     if not validation:
+        #         print('Token Invalido')
+
+        # except AuthenticationFailed as e:
+        #     return Response({'error': str(e)}, status=status.HTTP_401_UNAUTHORIZED)
+
+        # Your logic for processing the authenticated request
+        # return Response({'message': 'Access granted!'}, status=status.HTTP_200_OK)
 
     def get_logoff_response(self, request):
         '''Revokes refresh token and associated access token.'''
@@ -68,6 +88,13 @@ class OAuthToolKitMixin:
         except:
             if raise_exception is True:
                 raise AuthenticationFailed()
+            
+    def _get_request_token(self, request, raise_exception=True) -> str:
+        '''Get token from request'''
+        serializer = TokenSerializer(data=request.data)
+        serializer.is_valid(raise_exception=raise_exception)
+        token = serializer.validated_data['token']
+        return token           
 
     def _get_request_client_id(self, request, raise_exception=True) -> str:
         '''Get client_id from request'''
@@ -81,7 +108,6 @@ class OAuthToolKitMixin:
         serializer = RefreshSerializer(data=request.data)
         serializer.is_valid(raise_exception=raise_exception)
         client_secret = serializer.validated_data['client_secret']
-        print(client_secret)
         return client_secret
 
     def _get_token_from_cookie(self, request, raise_exception=True) -> Union[str, None]:

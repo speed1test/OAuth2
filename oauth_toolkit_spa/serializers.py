@@ -11,3 +11,6 @@ class LogInSerializer(serializers.Serializer):
 class RefreshSerializer(serializers.Serializer):
     client_id = serializers.CharField()
     client_secret = serializers.CharField()
+
+class TokenSerializer(serializers.Serializer):
+    token = serializers.CharField()

@@ -10,6 +10,12 @@ class LogIn(APIView, OAuthToolKitMixin):
     def post(self, request, *args, **kwargs):
         return self.get_login_response(request)
 
+class Hello(APIView, OAuthToolKitMixin):
+    '''Hello API endpoint'''
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request, *args, **kwargs):
+        return self.get_hello(request)
 
 class TokenRefresh(APIView, OAuthToolKitMixin):
     '''Token refresh API endpoint'''
