@@ -25,6 +25,7 @@ class OAuthToolKitMixin:
     def get_hello(self, request, raise_exception=True):
         try:
             validation = get_access_token_model().objects.get(token=self._get_request_token(request), expires__gt=timezone.now())
+            application = get_application_model().objects.get(client_id=self._get_request_client_id(request),client_secret=self._get_request_client_secret(request))
             return Response({'message': 'Access granted!'}, status=status.HTTP_200_OK)
         except:
             if raise_exception is True:
