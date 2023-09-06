@@ -9,6 +9,7 @@ from django.conf import settings
 from django.utils import timezone
 from django.contrib.auth import authenticate, login
 from .serializers import RefreshSerializer, LogInSerializer, TokenSerializer
+from tests.models import Amigo
 from typing import Union
 #
 
@@ -41,6 +42,33 @@ class OAuthToolKitMixin:
 
         # Your logic for processing the authenticated request
         # return Response({'message': 'Access granted!'}, status=status.HTTP_200_OK)
+    def save_name(self, request, raise_exception=True):
+        try:
+            validation = get_access_token_model().objects.get(token=self._get_request_token(request), expires__gt=timezone.now())
+            application = get_application_model().objects.get(client_id=self._get_request_client_id(request), client_secret=self._get_request_client_secret(request))
+            data = request.data  # Datos en formato JSON
+            nombre_amigo = data.get('nombre')  # Supongamos que el campo en JSON se llama 'nombre_amigo'
+            
+            # Guardar el nombre del amigo en la base de datos
+            Amigo.objects.create(nombre=nombre_amigo)
+            
+            return Response({'message': 'Nombre de amigo guardado correctamente'}, status=status.HTTP_201_CREATED)
+        except:
+            if raise_exception is True:
+                return Response({'error': 'Access Invalid'}, status=status.HTTP_401_UNAUTHORIZED)
+
+
+    def get_flavors(self, request, raise_exception=True):
+        try:
+            validation = get_access_token_model().objects.get(token=self._get_request_token(request), expires__gt=timezone.now())
+            application = get_application_model().objects.get(client_id=self._get_request_client_id(request), client_secret=self._get_request_client_secret(request))
+            # Ejemplo de lista de sabores
+            flavors = ['chocolate', 'vainilla', 'fresa', 'caramelo', 'menta','chicle']
+            return Response({'message': 'Access granted!', 'flavors': flavors}, status=status.HTTP_200_OK)
+        except:
+            if raise_exception is True:
+                return Response({'error': 'Access Invalid'}, status=status.HTTP_401_UNAUTHORIZED)
+
 
     def get_logoff_response(self, request):
         '''Revokes refresh token and associated access token.'''

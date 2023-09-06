@@ -9,6 +9,12 @@ class LogIn(APIView, OAuthToolKitMixin):
 
     def post(self, request, *args, **kwargs):
         return self.get_login_response(request)
+    
+class SaveName(APIView, OAuthToolKitMixin):
+    permission_classes = [permissions.AllowAny]
+    
+    def post(self, request, *args, **kwargs):
+        return self.save_name(request)
 
 class Hello(APIView, OAuthToolKitMixin):
     '''Hello API endpoint'''
@@ -16,6 +22,13 @@ class Hello(APIView, OAuthToolKitMixin):
 
     def post(self, request, *args, **kwargs):
         return self.get_hello(request)
+
+class Flavors(APIView, OAuthToolKitMixin):
+    '''Flavors API endpoint'''
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request, *args, **kwargs):
+        return self.get_flavors(request)
 
 class TokenRefresh(APIView, OAuthToolKitMixin):
     '''Token refresh API endpoint'''

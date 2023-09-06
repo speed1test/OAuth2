@@ -39,7 +39,7 @@ OAUTH2_PROVIDER_REFRESH_TOKEN_MODEL = "oauth2_provider.RefreshToken"
 
 DEBUG = True
 
-ALLOWED_HOSTS = ['localhost','192.168.1.19']
+ALLOWED_HOSTS = ['localhost','192.168.1.22', '192.168.1.20']
 
 TIME_ZONE = "UTC"
 
